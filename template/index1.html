@@ -1,0 +1,203 @@
+
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+</head>
+<div class="container">
+    <header>
+        <h1>LIST PRODUCT   </h1>
+       
+        <div class="iconCart">
+            <img src="static/assets/images/icon.png">
+            <div class="totalQuantity">0</div>
+        </div>
+    </header>
+
+    
+</div>
+
+<div class="cart">
+    <h2>
+        CART
+    </h2>
+
+    
+            <div class="quantity">
+                <button>-</button>
+                <span class="value">3</span>
+                <button>+</button>
+            </div>
+
+
+</div>
+
+    <div class="buttons">
+        <div class="close">
+            CLOSE
+        </div>
+        <div class="checkout">
+            <a href="checkout.html">CHECKOUT</a>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+    <script> 
+    let iconCart = document.querySelector('.iconCart');
+    let cart = document.querySelector('.cart');
+    let container = document.querySelector('.container');
+    let close = document.querySelector('.close');
+    
+    iconCart.addEventListener('click', function(){
+        if(cart.style.right == '-100%'){
+            cart.style.right = '0';
+            container.style.transform = 'translateX(-400px)';
+        }else{
+            cart.style.right = '-100%';
+            container.style.transform = 'translateX(0)';
+        }
+    })
+    close.addEventListener('click', function (){
+        cart.style.right = '-100%';
+        container.style.transform = 'translateX(0)';
+    })
+    
+    
+    let products = null;
+    // get data from file json
+    {% autoescape off %}
+    productlist = JSON.parse('{{allProds}}')
+    products = productlist;
+    {% endautoescape %}
+
+    addDataToHTML();
+
+    //show datas product in list 
+    function addDataToHTML(){
+        // remove datas default from HTML
+        let listProductHTML = document.querySelector('.listProduct');
+        listProductHTML.innerHTML = '';
+    
+        // add new datas
+        if(products != null) // if has data
+        {
+            products.forEach(product => {
+                let newProduct = document.createElement('div');
+                newProduct.classList.add('item');
+                newProduct.innerHTML = 
+                `<img src="${product.image}" alt="">
+                <h2>${product.name}</h2>
+                <div class="price">$${product.price}</div>
+                <button onclick="addCart(${product.id})">Add To Cart</button>`;
+    
+                listProductHTML.appendChild(newProduct);
+    
+            });
+        }
+    }
+    //use cookie so the cart doesn't get lost on refresh page
+    
+    
+    let listCart = [];
+    function checkCart(){
+        var cookieValue = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('listCart='));
+        if(cookieValue){
+            listCart = JSON.parse(cookieValue.split('=')[1]);
+        }else{
+            listCart = [];
+        }
+    }
+    checkCart();
+    function addCart($idProduct){
+        let productsCopy = JSON.parse(JSON.stringify(products));
+        //// If this product is not in the cart
+        if(!listCart[$idProduct]) 
+        {
+            listCart[$idProduct] = productsCopy.filter(product => product.id == $idProduct)[0];
+            listCart[$idProduct].quantity = 1;
+        }else{
+            //If this product is already in the cart.
+            //I just increased the quantity
+            listCart[$idProduct].quantity++;
+        }
+        document.cookie = "listCart=" + JSON.stringify(listCart) + "; expires=Thu, 31 Dec 2025 23:59:59 UTC; path=/;";
+    
+        addCartToHTML();
+    }
+    addCartToHTML();
+    function addCartToHTML(){
+        // clear data default
+        let listCartHTML = document.querySelector('.listCart');
+        listCartHTML.innerHTML = '';
+    
+        let totalHTML = document.querySelector('.totalQuantity');
+        let totalQuantity = 0;
+        // if has product in Cart
+        if(listCart){
+            listCart.forEach(product => {
+                if(product){
+                    let newCart = document.createElement('div');
+                    newCart.classList.add('item');
+                    newCart.innerHTML = 
+                        `<img src="${product.image}">
+                        <div class="content">
+                            <div class="name">${product.name}</div>
+                            <div class="price">$${product.price} / 1 product</div>
+                        </div>
+                        <div class="quantity">
+                            <button onclick="changeQuantity(${product.id}, '-')">-</button>
+                            <span class="value">${product.quantity}</span>
+                            <button onclick="changeQuantity(${product.id}, '+')">+</button>
+                        </div>`;
+                    listCartHTML.appendChild(newCart);
+                    totalQuantity = totalQuantity + product.quantity;
+                }
+            })
+        }
+        totalHTML.innerText = totalQuantity;
+    }
+    function changeQuantity($idProduct, $type){
+        switch ($type) {
+            case '+':
+                listCart[$idProduct].quantity++;
+                break;
+            case '-':
+                listCart[$idProduct].quantity--;
+    
+                // if quantity <= 0 then remove product in cart
+                if(listCart[$idProduct].quantity <= 0){
+                    delete listCart[$idProduct];
+                }
+                break;
+        
+            default:
+                break;
+        }
+        // save new data in cookie
+        document.cookie = "listCart=" + JSON.stringify(listCart) + "; expires=Thu, 31 Dec 2025 23:59:59 UTC; path=/;";
+        // reload html view cart
+        addCartToHTML();
+    }
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
